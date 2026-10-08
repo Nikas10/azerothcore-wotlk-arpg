@@ -19,6 +19,7 @@
 #define SCRIPT_OBJECT_ALL_SPELL_SCRIPT_H_
 
 #include "ScriptObject.h"
+#include "SharedDefines.h"
 #include <vector>
 
 enum AllSpellHook
@@ -38,11 +39,11 @@ enum AllSpellHook
     ALLSPELLHOOK_ON_CAST,
     ALLSPELLHOOK_ON_PREPARE,
     ALLSPELLHOOK_ON_IS_AURA_EXCLUSIVE_BY_SPECIFIC_WITH,
+    ALLSPELLHOOK_ON_SELECT_EXPLICIT_TARGET,
+    ALLSPELLHOOK_ON_AFTER_SELECT_EFFECT_TARGETS,
+    ALLSPELLHOOK_ON_MODIFY_HIT_RESULT,
     ALLSPELLHOOK_END
 };
-
-enum SpellCastResult : uint8;
-enum SpellEffIndex : uint8;
 
 class AllSpellScript : public ScriptObject
 {
@@ -106,6 +107,19 @@ public:
     virtual void OnSpellCast(Spell* /*spell*/, Unit* /*caster*/, SpellInfo const* /*spellInfo*/, bool /*skipCheck*/) { }
 
     virtual void OnSpellPrepare(Spell* /*spell*/, Unit* /*caster*/, SpellInfo const* /*spellInfo*/) { }
+
+    /**
+     * @brief Called in Spell::cast before the final cast check, so the explicit unit target can still be replaced
+     *
+     * @param keepFacing Set to true to stop a creature caster from turning to the explicit target
+     */
+    virtual void OnSpellSelectExplicitTarget(Spell* /*spell*/, bool& /*keepFacing*/) { }
+
+    // Called after the implicit targets of one effect are selected, before channel target checks
+    virtual void OnSpellAfterSelectEffectTargets(Spell* /*spell*/, SpellEffIndex /*effIndex*/) { }
+
+    // Called when a spell that hit reaches a unit; setting a miss result cancels its damage, healing and auras
+    virtual void OnSpellModifyHitResult(Spell* /*spell*/, Unit* /*caster*/, Unit* /*target*/, SpellMissInfo& /*missInfo*/) { }
 };
 
 // Compatibility for old scripts

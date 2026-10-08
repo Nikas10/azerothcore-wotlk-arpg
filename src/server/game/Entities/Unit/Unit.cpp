@@ -1581,6 +1581,7 @@ void Unit::CalculateSpellDamageTaken(SpellNonMeleeDamage* damageInfo, int32 dama
                 if (blocked)
                 {
                     damageInfo->blocked = victim->GetShieldBlockValue();
+                    sScriptMgr->OnUnitCalcBlockedAmount(victim, this, damageInfo->blocked);
                     // double blocked amount if block is critical
                     if (victim->isBlockCritical())
                         damageInfo->blocked *= 2;
@@ -1882,6 +1883,7 @@ void Unit::CalculateMeleeDamage(Unit* victim, CalcDamageInfo* damageInfo, Weapon
             damageInfo->TargetState = VICTIMSTATE_HIT;
             damageInfo->HitInfo |= HITINFO_BLOCK;
             damageInfo->blocked_amount = damageInfo->target->GetShieldBlockValue();
+            sScriptMgr->OnUnitCalcBlockedAmount(damageInfo->target, damageInfo->attacker, damageInfo->blocked_amount);
             // double blocked amount if block is critical
             if (damageInfo->target->isBlockCritical())
                 damageInfo->blocked_amount += damageInfo->blocked_amount;
@@ -3528,19 +3530,19 @@ uint32 Unit::GetDefenseSkillValue(Unit const* target) const
 
 float Unit::GetUnitDodgeChance() const
 {
+    float chance = 0.0f;
+
     if (IsPlayer())
-        return ToPlayer()->GetRealDodge(); //GetFloatValue(PLAYER_DODGE_PERCENTAGE);
-    else
+        chance = ToPlayer()->GetRealDodge(); //GetFloatValue(PLAYER_DODGE_PERCENTAGE);
+    else if (!ToCreature()->IsTotem())
     {
-        if (ToCreature()->IsTotem())
-            return 0.0f;
-        else
-        {
-            float dodge = ToCreature()->isWorldBoss() ? 5.85f : 5.0f; // Xinef: bosses should have 6.5% dodge (5.9 + 0.6 from defense skill difference)
-            dodge += GetTotalAuraModifier(SPELL_AURA_MOD_DODGE_PERCENT);
-            return dodge > 0.0f ? dodge : 0.0f;
-        }
+        chance = ToCreature()->isWorldBoss() ? 5.85f : 5.0f; // Xinef: bosses should have 6.5% dodge (5.9 + 0.6 from defense skill difference)
+        chance += GetTotalAuraModifier(SPELL_AURA_MOD_DODGE_PERCENT);
+        chance = chance > 0.0f ? chance : 0.0f;
     }
+
+    sScriptMgr->OnUnitGetDefenseChance(this, MELEE_HIT_DODGE, chance);
+    return chance;
 }
 
 float Unit::GetUnitParryChance() const
@@ -3570,7 +3572,9 @@ float Unit::GetUnitParryChance() const
         chance += GetTotalAuraModifier(SPELL_AURA_MOD_PARRY_PERCENT);
     }
 
-    return chance > 0.0f ? chance : 0.0f;
+    chance = chance > 0.0f ? chance : 0.0f;
+    sScriptMgr->OnUnitGetDefenseChance(this, MELEE_HIT_PARRY, chance);
+    return chance;
 }
 
 float Unit::GetUnitMissChance(WeaponAttackType attType) const
@@ -3590,28 +3594,27 @@ float Unit::GetUnitMissChance(WeaponAttackType attType) const
 
 float Unit::GetUnitBlockChance() const
 {
+    float chance = 0.0f;
+
     if (Player const* player = ToPlayer())
     {
+        // is player but has no block ability or no not broken shield equipped: chance stays 0
         if (player->CanBlock())
         {
             Item* tmpitem = player->GetUseableItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
             if (tmpitem && !tmpitem->IsBroken() && tmpitem->GetTemplate()->Block)
-                return GetFloatValue(PLAYER_BLOCK_PERCENTAGE);
+                chance = GetFloatValue(PLAYER_BLOCK_PERCENTAGE);
         }
-        // is player but has no block ability or no not broken shield equipped
-        return 0.0f;
     }
-    else
+    else if (!ToCreature()->IsTotem())
     {
-        if (ToCreature()->IsTotem())
-            return 0.0f;
-        else
-        {
-            float block = 5.0f;
-            block += GetTotalAuraModifier(SPELL_AURA_MOD_BLOCK_PERCENT);
-            return block > 0.0f ? block : 0.0f;
-        }
+        chance = 5.0f;
+        chance += GetTotalAuraModifier(SPELL_AURA_MOD_BLOCK_PERCENT);
+        chance = chance > 0.0f ? chance : 0.0f;
     }
+
+    sScriptMgr->OnUnitGetDefenseChance(this, MELEE_HIT_BLOCK, chance);
+    return chance;
 }
 
 float Unit::GetUnitCriticalChance(WeaponAttackType attackType, Unit const* victim) const
@@ -11044,6 +11047,8 @@ void Unit::UpdateSpeed(UnitMoveType mtype, bool forced)
         if (speed < min_speed)
             speed = min_speed;
     }
+
+    sScriptMgr->OnUnitUpdateSpeed(this, uint8(mtype), speed);
 
     SetSpeed(mtype, speed, forced);
 }

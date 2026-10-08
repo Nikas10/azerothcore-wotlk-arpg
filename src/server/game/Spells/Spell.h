@@ -607,6 +607,10 @@ public:
     void LoadScripts();
     std::list<TargetInfo>* GetUniqueTargetInfo() { return &m_UniqueTargetInfo; }
 
+    // Drops effectMask from selected unit targets; an empty guid drops it from every target
+    void RemoveUnitTargetEffects(uint32 effectMask, ObjectGuid targetGuid = ObjectGuid::Empty);
+    void AddScriptUnitTarget(Unit* target, uint32 effectMask) { AddUnitTarget(target, effectMask); }
+
     [[nodiscard]] uint32 GetTriggeredByAuraTickNumber() const { return m_triggeredByAuraSpell.tickNumber; }
     [[nodiscard]] SpellInfo const* GetTriggeredByAuraSpellInfo() const { return m_triggeredByAuraSpell.spellInfo; }
 

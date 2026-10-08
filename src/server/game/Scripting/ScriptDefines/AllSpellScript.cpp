@@ -94,6 +94,21 @@ void ScriptMgr::OnSpellPrepare(Spell* spell, Unit* caster, SpellInfo const* spel
     CALL_ENABLED_HOOKS(AllSpellScript, ALLSPELLHOOK_ON_PREPARE, script->OnSpellPrepare(spell, caster, spellInfo));
 }
 
+void ScriptMgr::OnSpellSelectExplicitTarget(Spell* spell, bool& keepFacing)
+{
+    CALL_ENABLED_HOOKS(AllSpellScript, ALLSPELLHOOK_ON_SELECT_EXPLICIT_TARGET, script->OnSpellSelectExplicitTarget(spell, keepFacing));
+}
+
+void ScriptMgr::OnSpellAfterSelectEffectTargets(Spell* spell, SpellEffIndex effIndex)
+{
+    CALL_ENABLED_HOOKS(AllSpellScript, ALLSPELLHOOK_ON_AFTER_SELECT_EFFECT_TARGETS, script->OnSpellAfterSelectEffectTargets(spell, effIndex));
+}
+
+void ScriptMgr::OnSpellModifyHitResult(Spell* spell, Unit* caster, Unit* target, SpellMissInfo& missInfo)
+{
+    CALL_ENABLED_HOOKS(AllSpellScript, ALLSPELLHOOK_ON_MODIFY_HIT_RESULT, script->OnSpellModifyHitResult(spell, caster, target, missInfo));
+}
+
 AllSpellScript::AllSpellScript(char const* name, std::vector<uint16> enabledHooks)
     : ScriptObject(name, ALLSPELLHOOK_END)
 {

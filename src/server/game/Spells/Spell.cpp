@@ -896,6 +896,8 @@ void Spell::SelectSpellTargets()
         // some spell effects don't add anything to target map (confirmed with sniffs) (like SPELL_EFFECT_DESTROY_ALL_TOTEMS)
         SelectEffectTypeImplicitTargets(i);
 
+        sScriptMgr->OnSpellAfterSelectEffectTargets(this, SpellEffIndex(i));
+
         if (m_targets.HasDst())
             AddDestTarget(*m_targets.GetDst(), i);
 
@@ -2392,6 +2394,18 @@ void Spell::CleanupTargetList()
     m_delayTrajectory = 0;
 }
 
+void Spell::RemoveUnitTargetEffects(uint32 effectMask, ObjectGuid targetGuid /*= ObjectGuid::Empty*/)
+{
+    m_UniqueTargetInfo.remove_if([&](TargetInfo& targetInfo)
+    {
+        if (!targetGuid.IsEmpty() && targetInfo.targetGUID != targetGuid)
+            return false;
+
+        targetInfo.effectMask = uint8(targetInfo.effectMask & ~effectMask);
+        return targetInfo.effectMask == 0;
+    });
+}
+
 void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*= true*/, bool implicit /*= true*/)
 {
     Unit* unitCaster = m_caster->ToUnit();
@@ -2691,6 +2705,18 @@ void Spell::DoAllEffectOnTarget(TargetInfo* target)
     // Reset damage/healing counter
     m_damage = target->damage;
     m_healing = -target->damage;
+
+    if (missInfo == SPELL_MISS_NONE && caster)
+    {
+        sScriptMgr->OnSpellModifyHitResult(this, caster, effectUnit, missInfo);
+        if (missInfo != SPELL_MISS_NONE)
+        {
+            target->missCondition = missInfo;
+            m_damage = 0;
+            m_healing = 0;
+            m_caster->SendSpellMiss(effectUnit, m_spellInfo->Id, missInfo);
+        }
+    }
 
     m_spellAura = nullptr; // Set aura to null for every target-make sure that pointer is not used for unit without aura applied
 
@@ -3957,7 +3983,10 @@ void Spell::_cast(bool skipCheck)
 
     SetExecutedCurrently(true);
 
-    if (!HasTriggeredCastFlag(TRIGGERED_IGNORE_SET_FACING))
+    bool keepFacing = false;
+    sScriptMgr->OnSpellSelectExplicitTarget(this, keepFacing);
+
+    if (!HasTriggeredCastFlag(TRIGGERED_IGNORE_SET_FACING) && !keepFacing)
         if (unitCaster && unitCaster->IsCreature() && m_targets.GetObjectTarget() && m_caster != m_targets.GetObjectTarget())
             unitCaster->SetInFront(m_targets.GetObjectTarget());
 

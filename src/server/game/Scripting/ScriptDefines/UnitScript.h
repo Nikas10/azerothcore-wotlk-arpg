@@ -44,6 +44,9 @@ enum UnitHook
     UNITHOOK_ON_UNIT_EXIT_COMBAT,
     UNITHOOK_ON_UNIT_DEATH,
     UNITHOOK_ON_UNIT_SET_SHAPESHIFT_FORM,
+    UNITHOOK_ON_UNIT_GET_DEFENSE_CHANCE,
+    UNITHOOK_ON_UNIT_CALC_BLOCKED_AMOUNT,
+    UNITHOOK_ON_UNIT_UPDATE_SPEED,
     UNITHOOK_END
 };
 
@@ -110,6 +113,20 @@ public:
     virtual void OnUnitExitCombat(Unit* /*unit*/) { }
     virtual void OnUnitDeath(Unit* /*unit*/, Unit* /*killer*/) { }
     virtual void OnUnitSetShapeshiftForm(Unit* /*unit*/, uint8 /*form*/) { }
+
+    /**
+     * @brief Called after the dodge, parry or block chance of a unit is computed
+     *
+     * @param outcome MELEE_HIT_DODGE, MELEE_HIT_PARRY or MELEE_HIT_BLOCK
+     * @param chance Percent chance, values above 100 force the outcome against skill bonuses
+     */
+    virtual void OnUnitGetDefenseChance(Unit const* /*unit*/, uint8 /*outcome*/, float& /*chance*/) { }
+
+    // Called when a block happens, before a critical block doubles the amount
+    virtual void OnUnitCalcBlockedAmount(Unit const* /*victim*/, Unit const* /*attacker*/, uint32& /*blocked*/) { }
+
+    // Called in Unit::UpdateSpeed after all aura modifiers, before the rate is applied
+    virtual void OnUnitUpdateSpeed(Unit* /*unit*/, uint8 /*moveType*/, float& /*speedRate*/) { }
 };
 
 #endif

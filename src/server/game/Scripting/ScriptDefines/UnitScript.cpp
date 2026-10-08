@@ -139,6 +139,21 @@ void ScriptMgr::OnUnitSetShapeshiftForm(Unit* unit, uint8 form)
     CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_UNIT_SET_SHAPESHIFT_FORM, script->OnUnitSetShapeshiftForm(unit, form));
 }
 
+void ScriptMgr::OnUnitGetDefenseChance(Unit const* unit, uint8 outcome, float& chance)
+{
+    CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_UNIT_GET_DEFENSE_CHANCE, script->OnUnitGetDefenseChance(unit, outcome, chance));
+}
+
+void ScriptMgr::OnUnitCalcBlockedAmount(Unit const* victim, Unit const* attacker, uint32& blocked)
+{
+    CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_UNIT_CALC_BLOCKED_AMOUNT, script->OnUnitCalcBlockedAmount(victim, attacker, blocked));
+}
+
+void ScriptMgr::OnUnitUpdateSpeed(Unit* unit, uint8 moveType, float& speedRate)
+{
+    CALL_ENABLED_HOOKS(UnitScript, UNITHOOK_ON_UNIT_UPDATE_SPEED, script->OnUnitUpdateSpeed(unit, moveType, speedRate));
+}
+
 UnitScript::UnitScript(char const* name, bool addToScripts, std::vector<uint16> enabledHooks)
     : ScriptObject(name, UNITHOOK_END)
 {

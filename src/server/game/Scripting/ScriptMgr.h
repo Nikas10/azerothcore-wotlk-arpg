@@ -582,6 +582,9 @@ public: /* UnitScript */
     void OnUnitExitCombat(Unit* unit);
     void OnUnitDeath(Unit* unit, Unit* killer);
     void OnUnitSetShapeshiftForm(Unit* unit, uint8 form);
+    void OnUnitGetDefenseChance(Unit const* unit, uint8 outcome, float& chance);
+    void OnUnitCalcBlockedAmount(Unit const* victim, Unit const* attacker, uint32& blocked);
+    void OnUnitUpdateSpeed(Unit* unit, uint8 moveType, float& speedRate);
 
 public: /* MovementHandlerScript */
     void OnPlayerMove(Player* player, MovementInfo movementInfo, uint32 opcode);
@@ -656,6 +659,9 @@ public: /* SpellSC */
     void OnSpellCastCancel(Spell* spell, Unit* caster, SpellInfo const* spellInfo, bool bySelf);
     void OnSpellCast(Spell* spell, Unit* caster, SpellInfo const* spellInfo, bool skipCheck);
     void OnSpellPrepare(Spell* spell, Unit* caster, SpellInfo const* spellInfo);
+    void OnSpellSelectExplicitTarget(Spell* spell, bool& keepFacing);
+    void OnSpellAfterSelectEffectTargets(Spell* spell, SpellEffIndex effIndex);
+    void OnSpellModifyHitResult(Spell* spell, Unit* caster, Unit* target, SpellMissInfo& missInfo);
 
 public: /* GameEventScript */
     void OnGameEventStart(uint16 EventID);
