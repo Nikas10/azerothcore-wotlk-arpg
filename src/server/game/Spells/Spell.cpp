@@ -3691,6 +3691,8 @@ SpellCastResult Spell::prepare(SpellCastTargets const* targets, AuraEffect const
         if (unitCaster->ToPlayer()->GetCommandStatus(CHEAT_CASTTIME))
             m_casttime = 0;
 
+    sScriptMgr->OnSpellCalcCastTime(this, m_casttime);
+
     // don't allow channeled spells / spells with cast time to be casted while moving
     // (even if they are interrupted on moving, spells with almost immediate effect get to have their effect processed before movement interrupter kicks in)
     if ((m_spellInfo->IsChanneled() || m_casttime) && unitCaster && unitCaster->IsPlayer() && unitCaster->isMoving() && m_spellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_MOVEMENT && !IsTriggered())

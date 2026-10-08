@@ -109,6 +109,11 @@ void ScriptMgr::OnSpellModifyHitResult(Spell* spell, Unit* caster, Unit* target,
     CALL_ENABLED_HOOKS(AllSpellScript, ALLSPELLHOOK_ON_MODIFY_HIT_RESULT, script->OnSpellModifyHitResult(spell, caster, target, missInfo));
 }
 
+void ScriptMgr::OnSpellCalcCastTime(Spell* spell, int32& castTime)
+{
+    CALL_ENABLED_HOOKS(AllSpellScript, ALLSPELLHOOK_ON_CALC_CAST_TIME, script->OnSpellCalcCastTime(spell, castTime));
+}
+
 AllSpellScript::AllSpellScript(char const* name, std::vector<uint16> enabledHooks)
     : ScriptObject(name, ALLSPELLHOOK_END)
 {

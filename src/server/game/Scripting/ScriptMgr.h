@@ -662,6 +662,7 @@ public: /* SpellSC */
     void OnSpellSelectExplicitTarget(Spell* spell, bool& keepFacing);
     void OnSpellAfterSelectEffectTargets(Spell* spell, SpellEffIndex effIndex);
     void OnSpellModifyHitResult(Spell* spell, Unit* caster, Unit* target, SpellMissInfo& missInfo);
+    void OnSpellCalcCastTime(Spell* spell, int32& castTime);
 
 public: /* GameEventScript */
     void OnGameEventStart(uint16 EventID);

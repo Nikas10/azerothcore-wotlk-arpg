@@ -42,6 +42,7 @@ enum AllSpellHook
     ALLSPELLHOOK_ON_SELECT_EXPLICIT_TARGET,
     ALLSPELLHOOK_ON_AFTER_SELECT_EFFECT_TARGETS,
     ALLSPELLHOOK_ON_MODIFY_HIT_RESULT,
+    ALLSPELLHOOK_ON_CALC_CAST_TIME,
     ALLSPELLHOOK_END
 };
 
@@ -120,6 +121,9 @@ public:
 
     // Called when a spell that hit reaches a unit; setting a miss result cancels its damage, healing and auras
     virtual void OnSpellModifyHitResult(Spell* /*spell*/, Unit* /*caster*/, Unit* /*target*/, SpellMissInfo& /*missInfo*/) { }
+
+    // Called in Spell::prepare after cast time is calculated, before the cast bar is sent
+    virtual void OnSpellCalcCastTime(Spell* /*spell*/, int32& /*castTime*/) { }
 };
 
 // Compatibility for old scripts
