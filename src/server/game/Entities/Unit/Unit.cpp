@@ -12849,10 +12849,58 @@ void Unit::RestoreDisplayId()
     SetDisplayId(GetNativeDisplayId());
 }
 
+namespace
+{
+    Unit::CharacterComboPointsPredicate CharacterComboPointsCheck = nullptr;
+}
+
+void Unit::SetCharacterComboPointsPredicate(CharacterComboPointsPredicate predicate)
+{
+    CharacterComboPointsCheck = predicate;
+}
+
+bool Unit::UsesCharacterComboPoints() const
+{
+    return CharacterComboPointsCheck && CharacterComboPointsCheck(this);
+}
+
+void Unit::RetargetComboPoints(Unit* target)
+{
+    if (m_comboTarget == target)
+        return;
+
+    if (m_comboTarget)
+        m_comboTarget->RemoveComboPointHolder(this);
+
+    m_comboTarget = target;
+
+    if (m_comboTarget)
+        m_comboTarget->AddComboPointHolder(this);
+}
+
+void Unit::DetachComboTarget()
+{
+    if (!m_comboTarget)
+        return;
+
+    Unit* target = m_comboTarget;
+    m_comboTarget = nullptr;
+    target->RemoveComboPointHolder(this);
+}
+
 void Unit::AddComboPoints(Unit* target, int8 count)
 {
     if (!count)
+        return;
+
+    // The pool belongs to this unit. A new enemy adds to it instead of replacing it.
+    if (UsesCharacterComboPoints())
     {
+        if (target && target != m_comboTarget)
+            RetargetComboPoints(target);
+
+        m_comboPoints = std::max<int8>(std::min<int8>(m_comboPoints + count, 5), 0);
+        SendComboPoints();
         return;
     }
 
@@ -12879,6 +12927,13 @@ void Unit::ClearComboPoints()
 {
     if (!m_comboTarget)
     {
+        // The enemy may already be gone. A character-bound pool still has to be spent.
+        if (!UsesCharacterComboPoints() || !m_comboPoints)
+            return;
+
+        RemoveAurasByType(SPELL_AURA_RETAIN_COMBO_POINTS);
+        m_comboPoints = 0;
+        SendComboPoints();
         return;
     }
 
@@ -12934,7 +12989,15 @@ void Unit::ClearComboPointHolders()
 {
     while (!m_ComboPointHolders.empty())
     {
-        (*m_ComboPointHolders.begin())->ClearComboPoints(); // this also removes it from m_comboPointHolders
+        Unit* holder = *m_ComboPointHolders.begin();
+        if (holder->UsesCharacterComboPoints())
+        {
+            // This enemy is dying or evading. Keep the player's pool and drop the pointer.
+            holder->DetachComboTarget();
+            m_ComboPointHolders.erase(holder);
+        }
+        else
+            holder->ClearComboPoints(); // this also removes it from m_comboPointHolders
     }
 }
 

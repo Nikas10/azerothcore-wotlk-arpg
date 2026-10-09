@@ -1018,15 +1018,34 @@ public:
     [[nodiscard]] uint32 GetLastExtraAttackSpell() const { return _lastExtraAttackSpell; }
     void AddExtraAttacks(uint32 count);
 
-    // Combot points system
-    [[nodiscard]] uint8 GetComboPoints(Unit const* who = nullptr) const { return (who && m_comboTarget != who) ? 0 : m_comboPoints; }
-    [[nodiscard]] uint8 GetComboPoints(ObjectGuid const& guid) const { return (m_comboTarget && m_comboTarget->GetGUID() == guid) ? m_comboPoints : 0; }
+    // Combo points system.
+    // A module can keep the pool on the character instead of the current enemy.
+    using CharacterComboPointsPredicate = bool (*)(Unit const* unit);
+    static void SetCharacterComboPointsPredicate(CharacterComboPointsPredicate predicate);
+    [[nodiscard]] bool UsesCharacterComboPoints() const;
+
+    [[nodiscard]] uint8 GetComboPoints(Unit const* who = nullptr) const
+    {
+        if (who && m_comboTarget != who && !UsesCharacterComboPoints())
+            return 0;
+
+        return m_comboPoints;
+    }
+    [[nodiscard]] uint8 GetComboPoints(ObjectGuid const& guid) const
+    {
+        if ((!m_comboTarget || m_comboTarget->GetGUID() != guid) && !UsesCharacterComboPoints())
+            return 0;
+
+        return m_comboPoints;
+    }
     [[nodiscard]] Unit* GetComboTarget() const { return m_comboTarget; }
     [[nodiscard]] ObjectGuid const GetComboTargetGUID() const { return m_comboTarget ? m_comboTarget->GetGUID() : ObjectGuid::Empty; }
 
     void AddComboPoints(Unit* target, int8 count);
     void AddComboPoints(int8 count) { AddComboPoints(nullptr, count); }
     void ClearComboPoints();
+    // Point the client portrait at another unit without changing the stored count.
+    void RetargetComboPoints(Unit* target);
 
     void AddComboPointHolder(Unit* unit) { m_ComboPointHolders.insert(unit); }
     void RemoveComboPointHolder(Unit* unit) { m_ComboPointHolders.erase(unit); }
@@ -2245,6 +2264,9 @@ private:
     Diminishing m_Diminishing;
 
     std::unordered_set<AbstractFollower*> m_followingMe;
+
+    // Drop the enemy pointer and keep the stored count. Used when that enemy dies.
+    void DetachComboTarget();
 
     Unit* m_comboTarget;
     int8 m_comboPoints;

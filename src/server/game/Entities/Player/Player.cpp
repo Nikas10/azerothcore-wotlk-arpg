@@ -11751,6 +11751,18 @@ void Player::SetSelection(ObjectGuid guid)
 
     if (NeedSendSpectatorData())
         ArenaSpectator::SendCommand_GUID(FindMap(), GetGUID(), "TRG", guid);
+
+    // The 3.3.5 combo frame reads the packet target. Move that pointer with the selection
+    // so the portrait follows the player without resetting the stored count.
+    if (!UsesCharacterComboPoints() || !GetComboPoints())
+        return;
+
+    Unit* selected = guid ? ObjectAccessor::GetUnit(*this, guid) : nullptr;
+    if (GetComboTarget() == selected)
+        return;
+
+    RetargetComboPoints(selected);
+    SendComboPoints();
 }
 
 void Player::SetGroup(Group* group, int8 subgroup)
